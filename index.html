@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Canvas</title>
+    <style>
+        body {
+            background-color: #1E1E2E;
+            color: #FFFFFF;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        canvas {
+            background-color: #2E2E3E;
+            display: block;
+            margin: 20px auto;
+            border-radius: 10px;
+        }
+        button {
+            background-color: #00A67E;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #008B6F;
+        }
+    </style>
+</head>
+<body>
+    <h1>ChatGPT Themed Canvas</h1>
+    <canvas id="drawingCanvas" width="500" height="400"></canvas>
+    <br>
+    <button onclick="clearCanvas()">Clear Canvas</button>
+    
+    <script>
+        const canvas = document.getElementById("drawingCanvas");
+        const ctx = canvas.getContext("2d");
+        const shapes = [];
+
+        function drawShapes() {
+            // Blue Rectangle
+            ctx.fillStyle = "blue";
+            ctx.fillRect(50, 50, 150, 100);
+            shapes.push({ type: "rect", x: 50, y: 50, width: 150, height: 100 });
+            
+            // Red Circle
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            ctx.arc(300, 100, 50, 0, Math.PI * 2);
+            ctx.fill();
+            shapes.push({ type: "circle", x: 300, y: 100, radius: 50 });
+            
+            // Green Triangle
+            ctx.fillStyle = "green";
+            ctx.beginPath();
+            ctx.moveTo(400, 200);
+            ctx.lineTo(350, 300);
+            ctx.lineTo(450, 300);
+            ctx.closePath();
+            ctx.fill();
+            shapes.push({ type: "triangle", vertices: [[400, 200], [350, 300], [450, 300]] });
+            
+            // Yellow Line
+            ctx.strokeStyle = "yellow";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.stroke();
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            shapes.length = 0;
+        }
+
+        function getRandomColor() {
+            return `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+        }
+
+        function drawRandomShape(x, y) {
+            const shapeType = ["rect", "circle", "triangle"][Math.floor(Math.random() * 3)];
+            ctx.fillStyle = getRandomColor();
+
+            if (shapeType === "rect") {
+                ctx.fillRect(x, y, 50, 50);
+                shapes.push({ type: "rect", x, y, width: 50, height: 50 });
+            } else if (shapeType === "circle") {
+                ctx.beginPath();
+                ctx.arc(x, y, 25, 0, Math.PI * 2);
+                ctx.fill();
+                shapes.push({ type: "circle", x, y, radius: 25 });
+            } else if (shapeType === "triangle") {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x - 30, y + 50);
+                ctx.lineTo(x + 30, y + 50);
+                ctx.closePath();
+                ctx.fill();
+                shapes.push({ type: "triangle", vertices: [[x, y], [x - 30, y + 50], [x + 30, y + 50]] });
+            }
+        }
+
+        function isInsideShape(shape, x, y) {
+            if (shape.type === "rect") {
+                return x >= shape.x && x <= shape.x + shape.width && y >= shape.y && y <= shape.y + shape.height;
+            } else if (shape.type === "circle") {
+                const dx = x - shape.x;
+                const dy = y - shape.y;
+                return dx * dx + dy * dy <= shape.radius * shape.radius;
+            } else if (shape.type === "triangle") {
+                const [A, B, C] = shape.vertices;
+                function area(x1, y1, x2, y2, x3, y3) {
+                    return Math.abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2);
+                }
+                const totalArea = area(...A, ...B, ...C);
+                const area1 = area(x, y, ...B, ...C);
+                const area2 = area(...A, x, y, ...C);
+                const area3 = area(...A, ...B, x, y);
+                return Math.abs(totalArea - (area1 + area2 + area3)) < 0.1;
+            }
+            return false;
+        }
+
+        canvas.addEventListener("click", (event) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            for (let i = shapes.length - 1; i >= 0; i--) {
+                if (isInsideShape(shapes[i], x, y)) {
+                    shapes.splice(i, 1);
+                    clearCanvas();
+                    shapes.forEach(shape => drawRandomShape(shape.x, shape.y));
+                    return;
+                }
+            }
+            drawRandomShape(x, y);
+        });
+        
+        drawShapes();
+    </script>
+</body>
+</html>
